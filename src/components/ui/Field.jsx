@@ -1,7 +1,7 @@
 import { cn } from "../../utils/cn.js";
 
 export const inputCls =
-  "w-full border-b-2 border-ink bg-transparent px-3 py-2.5 font-mono text-base sm:text-sm tnum focus-visible:bg-[#F0F0F0] focus-visible:outline-none sharp-corners min-h-[44px]";
+  "w-full border-b-2 border-ink bg-transparent px-3 py-2.5 font-mono text-base sm:text-sm tnum field-focus focus-visible:outline-none sharp-corners min-h-[44px]";
 export const labelCls = "font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600";
 
 export function Field({ label, error, hint, children, htmlFor }) {

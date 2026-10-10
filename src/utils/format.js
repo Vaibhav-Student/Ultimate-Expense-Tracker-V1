@@ -80,6 +80,13 @@ export function displayShort(iso) {
   return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 }
 
+export function fmtLong(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

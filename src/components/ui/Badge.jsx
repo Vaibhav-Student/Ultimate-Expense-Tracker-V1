@@ -3,7 +3,7 @@ import { cn } from "../../utils/cn.js";
 export function Badge({ children, tone = "default", className }) {
   const tones = {
     default: "bg-ink text-paper",
-    accent: "bg-editorial text-paper",
+    accent: "bg-editorial text-on-accent",
     outline: "border border-ink text-ink bg-transparent",
     paper: "bg-paper text-ink border border-ink",
   };

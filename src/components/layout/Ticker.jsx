@@ -19,9 +19,9 @@ export function Ticker() {
           <div key={half} className="flex items-center" aria-hidden={half === 1}>
             {row.map((item, i) => (
               <span key={`${half}-${i}`} className="inline-flex items-center gap-3 px-6 py-2.5 font-mono text-xs uppercase tracking-widest">
-                <span className="bg-editorial text-paper px-1.5 py-0.5 text-[10px] font-bold">{item.flag}</span>
+                <span className="bg-editorial text-on-accent px-1.5 py-0.5 text-[10px] font-bold">{item.flag}</span>
                 <span>{item.text}</span>
-                <span className="text-neutral-500 pl-3">///</span>
+                <span className="text-paper opacity-40 pl-3">///</span>
               </span>
             ))}
           </div>

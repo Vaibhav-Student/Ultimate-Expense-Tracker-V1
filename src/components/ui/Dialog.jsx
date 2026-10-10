@@ -64,7 +64,7 @@ export function Confirm({ open, onClose, onConfirm, title, body, confirmLabel = 
           autoFocus
           className={`flex-1 min-h-[44px] font-sans text-xs font-bold uppercase tracking-widest border transition-colors ${
             tone === "danger"
-              ? "bg-editorial text-paper border-transparent hover:bg-ink"
+              ? "bg-editorial text-on-accent border-transparent hover:bg-ink"
               : "bg-ink text-paper border-transparent hover:bg-paper hover:text-ink hover:border-ink"
           }`}
         >

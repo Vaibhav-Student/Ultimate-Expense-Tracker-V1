@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Plus, Search, Bell, Settings as SettingsIcon, Menu, X } from "lucide-react";
+import { Plus, Search, Bell, Sun, Moon, Menu, X } from "lucide-react";
 import { useFinance } from "../../store/finance.jsx";
 import { monthLabel } from "../../utils/format.js";
 
 export function Header({ onAdd, onSearch, onNav, onMenu, menuOpen = false }) {
-  const { month, budgets, monthTx } = useFinance();
+  const { month, budgets, monthTx, settings, updateSettings } = useFinance();
   const [q, setQ] = useState("");
+  const dark = settings.theme === "dark";
   const spent = monthTx(month).filter(t => t.type === "expense").reduce((a, t) => a + t.amountCents, 0);
   const limit = budgets.filter(b => b.month === month).reduce((a, b) => a + b.limitCents, 0);
   const over = limit > 0 && spent > limit;
@@ -61,25 +62,26 @@ export function Header({ onAdd, onSearch, onNav, onMenu, menuOpen = false }) {
         >
           <Bell className="h-5 w-5" strokeWidth={1.5} />
           {alerts > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-editorial text-paper font-mono text-[10px] font-bold px-1.5 py-0.5 border border-ink">
+            <span className="absolute -top-1.5 -right-1.5 bg-editorial text-on-accent font-mono text-[10px] font-bold px-1.5 py-0.5 border border-ink">
               {alerts}
             </span>
           )}
         </button>
         <button
-          onClick={() => onNav("settings")}
-          aria-label="Open settings"
-          className="hidden sm:flex min-h-[44px] min-w-[44px] items-center justify-center border border-ink hover:bg-ink hover:text-paper transition-colors"
+          onClick={() => updateSettings({ theme: dark ? "light" : "dark" })}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          title={dark ? "Light edition" : "Night edition"}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center border border-ink hover:bg-ink hover:text-paper transition-colors shrink-0"
         >
-          <SettingsIcon className="h-5 w-5" strokeWidth={1.5} />
+          {dark ? <Sun className="h-5 w-5" strokeWidth={1.5} /> : <Moon className="h-5 w-5" strokeWidth={1.5} />}
         </button>
         <button
           onClick={onAdd}
-          className="min-h-[44px] px-4 sm:px-6 inline-flex items-center gap-2 bg-ink text-paper border border-transparent hover:bg-paper hover:text-ink hover:border-ink font-sans text-xs font-bold uppercase tracking-widest transition-colors"
+          className="min-h-[44px] px-3 sm:px-6 inline-flex items-center gap-2 bg-ink text-paper border border-transparent hover:bg-paper hover:text-ink hover:border-ink font-sans text-xs font-bold uppercase tracking-widest transition-colors shrink-0"
         >
           <Plus className="h-4 w-4" strokeWidth={2} />
-          <span className="hidden sm:inline">Add Transaction</span>
-          <span className="sm:hidden">Add</span>
+          <span className="hidden min-[420px]:inline">Add</span>
+          <span className="hidden sm:inline"> Transaction</span>
         </button>
       </div>
 

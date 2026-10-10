@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFinance } from "../store/finance.jsx";
-import { Field, inputCls } from "../components/ui/Field.jsx";
+import { Field } from "../components/ui/Field.jsx";
+import { SelectField } from "../components/ui/SelectField.jsx";
 import { Confirm } from "../components/ui/Dialog.jsx";
 import { DEFAULT_ACCOUNTS } from "../data/categories.js";
 import { downloadFile } from "../utils/format.js";
@@ -25,12 +26,35 @@ export function SettingsPage() {
       <p className="font-mono text-xs uppercase tracking-[0.25em] text-editorial font-bold">Desk F · Press room</p>
       <h1 className="font-serif font-black tracking-tighter text-5xl sm:text-6xl leading-none mt-1">Settings.</h1>
       <p className="font-body text-[15px] text-neutral-600 mt-2 max-w-2xl">
-        Currency, thresholds, and data controls. Data is local-first — nothing leaves your browser unless you export it.
+        Currency, appearance, thresholds, and data controls. Data is local-first — nothing leaves your browser unless you export it.
       </p>
 
       {status && <p role="status" className="mt-4 border border-ink bg-ink text-paper px-3 py-2 font-mono text-xs uppercase tracking-widest">{status}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <section aria-labelledby="look-h" className="border border-ink bg-paper p-5">
+          <h2 id="look-h" className="font-serif font-black text-2xl">Appearance.</h2>
+          <div className="grid grid-cols-2 border border-ink mt-4" role="radiogroup" aria-label="Edition">
+            {[{ v: "light", label: "Light edition" }, { v: "dark", label: "Night edition" }].map(o => (
+              <button
+                key={o.v}
+                role="radio"
+                aria-checked={(f.settings.theme || "light") === o.v}
+                onClick={() => { f.updateSettings({ theme: o.v }); setStatus(`${o.label} set.`); }}
+                className={cn(
+                  "py-3 min-h-[44px] font-sans text-xs font-bold uppercase tracking-widest transition-colors",
+                  (f.settings.theme || "light") === o.v ? "bg-ink text-paper" : "hover:bg-neutral-100"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <p className="font-body text-[13px] text-neutral-600 mt-3">
+            Day edition is warm paper and ink; night edition inverts the stock. Same borders, same type — choice is saved on this device.
+          </p>
+        </section>
+
         <section aria-labelledby="cur-h" className="border border-ink bg-paper p-5">
           <h2 id="cur-h" className="font-serif font-black text-2xl">Currency &amp; format.</h2>
           <div className="grid grid-cols-2 border border-ink mt-4" role="radiogroup" aria-label="Currency">
@@ -54,14 +78,12 @@ export function SettingsPage() {
           </p>
           <div className="mt-4">
             <Field label="Default account for new entries" htmlFor="set-acct">
-              <select
+              <SelectField
                 id="set-acct"
                 value={f.settings.defaultAccount}
-                onChange={e => { f.updateSettings({ defaultAccount: e.target.value }); setStatus("Default account updated."); }}
-                className={cn(inputCls, "cursor-pointer bg-paper")} style={{ borderRadius: 0 }}
-              >
-                {[...new Set([...DEFAULT_ACCOUNTS, ...f.transactions.map(t => t.account)])].map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
+                onChange={v => { f.updateSettings({ defaultAccount: v }); setStatus("Default account updated."); }}
+                options={[...new Set([...DEFAULT_ACCOUNTS, ...f.transactions.map(t => t.account)])]}
+              />
             </Field>
           </div>
         </section>
@@ -108,7 +130,7 @@ export function SettingsPage() {
             <button onClick={() => { f.resetSample(); setStatus("Sample edition restored."); }} className="flex-1 min-h-[44px] border border-ink font-sans text-xs font-bold uppercase tracking-widest hover:bg-ink hover:text-paper transition-colors">
               Restore sample data
             </button>
-            <button onClick={() => setConfirmClear(true)} className="flex-1 min-h-[44px] bg-editorial text-paper font-sans text-xs font-bold uppercase tracking-widest hover:bg-ink transition-colors">
+            <button onClick={() => setConfirmClear(true)} className="flex-1 min-h-[44px] bg-editorial text-on-accent font-sans text-xs font-bold uppercase tracking-widest hover:bg-ink hover:text-paper transition-colors">
               Clear all data
             </button>
           </div>

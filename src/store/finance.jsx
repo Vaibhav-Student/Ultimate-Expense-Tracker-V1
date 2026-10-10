@@ -109,11 +109,23 @@ export function FinanceProvider({ children }) {
     expense: DEFAULT_EXPENSE_CATEGORIES,
     income: DEFAULT_INCOME_CATEGORIES,
   }));
-  const [settings, setSettings] = useState(() => readJSON(K.settings, {
-    currency: "INR",
-    warningAt: 0.8,
-    defaultAccount: "Cash",
-  }));
+  const [settings, setSettings] = useState(() => {
+    const stored = readJSON(K.settings, null);
+    const merged = {
+      currency: "INR",
+      warningAt: 0.8,
+      defaultAccount: "Cash",
+      theme: "light",
+      ...(stored || {}),
+    };
+    // First launch with no saved choice: follow the device.
+    if (!stored || !stored.theme) {
+      try {
+        if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) merged.theme = "dark";
+      } catch { /* ignore */ }
+    }
+    return merged;
+  });
   const [month, setMonth] = useState(() => currentMonthKey());
   const [savedAt, setSavedAt] = useState(null);
 
@@ -123,6 +135,15 @@ export function FinanceProvider({ children }) {
   useEffect(() => { writeJSON(K.budgets, budgets); }, [budgets]);
   useEffect(() => { writeJSON(K.cats, cats); }, [cats]);
   useEffect(() => { writeJSON(K.settings, settings); }, [settings]);
+
+  // Apply the edition to the document (persists via settings above).
+  useEffect(() => {
+    const t = settings.theme === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = t;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content", t === "dark" ? "#16130D" : "#F9F9F7"
+    );
+  }, [settings.theme]);
 
   // Every ledger mutation stamps the save time (event handlers, not effects).
   const saveTx = (updater) => {

@@ -3,6 +3,7 @@ import { Download, Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { useFinance } from "../store/finance.jsx";
 import { CategoryDonut, CategoryBars, CashflowTrend } from "../components/reports/Charts.jsx";
 import { MonthCalendar, DayLedger } from "../components/reports/MonthCalendar.jsx";
+import { DateField } from "../components/ui/DateField.jsx";
 import { formatCurrency, monthLabel, shiftMonth, currentMonthKey, toCSV, downloadFile } from "../utils/format.js";
 
 export function ReportsPage() {
@@ -73,14 +74,18 @@ export function ReportsPage() {
       </div>
 
       <div className="mt-5 border border-ink bg-paper p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 no-print">
-        <label className="block">
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600">From</span>
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="mt-1 w-full border-b-2 border-ink bg-transparent px-3 py-2.5 font-mono text-base sm:text-sm min-h-[44px]" style={{ borderRadius: 0 }} />
-        </label>
-        <label className="block">
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600">To</span>
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="mt-1 w-full border-b-2 border-ink bg-transparent px-3 py-2.5 font-mono text-base sm:text-sm min-h-[44px]" style={{ borderRadius: 0 }} />
-        </label>
+        <div>
+          <label htmlFor="rep-from" className="font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600">From</label>
+          <div className="mt-1">
+            <DateField id="rep-from" value={from} onChange={setFrom} />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="rep-to" className="font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600">To</label>
+          <div className="mt-1">
+            <DateField id="rep-to" value={to} onChange={setTo} />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 border border-ink bg-paper mt-4 print-block">

@@ -50,3 +50,12 @@ Paper `#F9F9F7`, ink `#111111`, editorial red `#CC0000`, pine green `#276749` (+
 Playfair Display / Lora / Inter / JetBrains Mono (tabular figures). 0px radius, 1/2/4px ink borders,
 hard-shadow hover, dot-grid texture, fast 200ms mechanical motion, `prefers-reduced-motion` support.
 Status never color-only: labels (IN/OUT, On Track/Exceeded), icons, and numbers accompany color.
+
+## Night edition (dark mode)
+
+All theme colors resolve through CSS variables (`--paper`, `--ink`, …), so the whole paper
+inverts by setting `data-theme="dark"` on `<html>` — no per-component variants.
+Toggle: Sun/Moon button in the header, or Settings → Appearance. Saved per device in settings;
+first launch follows the OS `prefers-color-scheme`. Night stock: paper `#16130D`, ink `#EFE9DF`,
+brightened red `#FF6B60` / green `#7FD8A4` keep AA contrast; red fills use `.text-on-accent`
+for readable text. Muted Tailwind greys remap per edition in `src/index.css`.

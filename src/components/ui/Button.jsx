@@ -11,7 +11,7 @@ const buttonVariants = cva(
         secondary:
           "border border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
         ghost: "text-ink hover:bg-divider hover:text-ink border border-transparent",
-        accent: "bg-editorial text-paper border border-transparent hover:bg-ink hover:text-paper",
+        accent: "bg-editorial text-on-accent border border-transparent hover:bg-ink hover:text-paper",
       },
     },
     defaultVariants: { variant: "primary" },

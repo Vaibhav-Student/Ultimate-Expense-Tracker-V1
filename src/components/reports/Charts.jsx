@@ -2,7 +2,8 @@ import { formatCurrency } from "../../utils/format.js";
 
 // Monochrome editorial charts (no chart lib): CSS donut + bars + trend.
 // Every visual has a tabular alternative and accessible description.
-const INKS = ["#111111", "#3d3d3d", "#6b6b6b", "#8a8a8a", "#a8a8a8", "#CC0000", "#276749", "#525252"];
+// Monochrome editorial slices; ink/red/green resolve per edition via CSS vars.
+const INKS = ["var(--ink)", "#6E6E6E", "#9A9A9A", "#C2C2C2", "var(--editorial)", "var(--pine)", "#7A7A7A", "#4A4A4A"];
 
 export function CategoryDonut({ data, currency }) {
   const total = data.reduce((a, d) => a + d.amountCents, 0);

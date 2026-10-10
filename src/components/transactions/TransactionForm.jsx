@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useFinance } from "../../store/finance.jsx";
 import { DEFAULT_ACCOUNTS } from "../../data/categories.js";
 import { Field, inputCls } from "../ui/Field.jsx";
+import { DateField } from "../ui/DateField.jsx";
+import { SelectField } from "../ui/SelectField.jsx";
 import { todayISO } from "../../utils/format.js";
 import { cn } from "../../utils/cn.js";
 
@@ -92,10 +94,7 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
           />
         </Field>
         <Field label="Date" error={errors.date} htmlFor="tx-date">
-          <input
-            id="tx-date" type="date" value={date} onChange={e => setDate(e.target.value)}
-            className={inputCls} style={{ borderRadius: 0 }}
-          />
+          <DateField id="tx-date" value={date} onChange={setDate} />
         </Field>
       </div>
 
@@ -112,20 +111,15 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Category" error={errors.category} htmlFor="tx-cat">
-          <select
-            id="tx-cat" value={category} onChange={e => setCategory(e.target.value)}
-            className={cn(inputCls, "cursor-pointer bg-paper")} style={{ borderRadius: 0 }}
-          >
-            {catList.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <SelectField id="tx-cat" value={category} onChange={setCategory} options={catList} />
         </Field>
         <Field label="Account / Method" htmlFor="tx-acct">
-          <select
-            id="tx-acct" value={account} onChange={e => setAccount(e.target.value)}
-            className={cn(inputCls, "cursor-pointer bg-paper")} style={{ borderRadius: 0 }}
-          >
-            {[...new Set([...DEFAULT_ACCOUNTS, account])].map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
+          <SelectField
+            id="tx-acct"
+            value={account}
+            onChange={setAccount}
+            options={[...new Set([...DEFAULT_ACCOUNTS, account])]}
+          />
         </Field>
       </div>
 

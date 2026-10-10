@@ -7,13 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        paper: "#F9F9F7",
-        ink: "#111111",
-        divider: "#E5E5E0",
-        editorial: "#CC0000",
-        pine: "#276749",
-        pinebg: "#E7F0E9",
-        rosebg: "#F6E7E5",
+        paper: "var(--paper)",
+        ink: "var(--ink)",
+        divider: "var(--divider)",
+        editorial: "var(--editorial)",
+        pine: "var(--pine)",
+        pinebg: "var(--pinebg)",
+        rosebg: "var(--rosebg)",
       },
       fontFamily: {
         serif: ["'Playfair Display'", "'Times New Roman'", "serif"],
@@ -25,8 +25,8 @@ export default {
         'screen-xl': '1280px',
       },
       boxShadow: {
-        'hard': '4px 4px 0px 0px #111111',
-        'hard-sm': '2px 2px 0px 0px #111111',
+        'hard': '4px 4px 0px 0px var(--ink)',
+        'hard-sm': '2px 2px 0px 0px var(--ink)',
       },
     },
   },

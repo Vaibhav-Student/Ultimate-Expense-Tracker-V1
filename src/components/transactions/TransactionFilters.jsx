@@ -1,5 +1,6 @@
 import { useFinance } from "../../store/finance.jsx";
-import { inputCls } from "../ui/Field.jsx";
+import { SelectField } from "../ui/SelectField.jsx";
+import { DateField } from "../ui/DateField.jsx";
 import { cn } from "../../utils/cn.js";
 
 export function TransactionFilters({ value, onChange }) {
@@ -29,39 +30,47 @@ export function TransactionFilters({ value, onChange }) {
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-        <label className="block">
-          <span className={wrap}>Category</span>
-          <select
-            value={value.category} onChange={e => set("category", e.target.value)}
-            className={cn(inputCls, "mt-1 cursor-pointer bg-paper")} style={{ borderRadius: 0 }}
-          >
-            <option value="all">All categories</option>
-            <optgroup label="Expense">
-              {categories.expense.map(c => <option key={c} value={c}>{c}</option>)}
-            </optgroup>
-            <optgroup label="Income">
-              {categories.income.map(c => <option key={c} value={c}>{c}</option>)}
-            </optgroup>
-          </select>
-        </label>
-        <label className="block">
-          <span className={wrap}>Account</span>
-          <select
-            value={value.account} onChange={e => set("account", e.target.value)}
-            className={cn(inputCls, "mt-1 cursor-pointer bg-paper")} style={{ borderRadius: 0 }}
-          >
-            <option value="all">All methods</option>
-            {[...new Set(value.allAccounts)].map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </label>
-        <label className="block">
-          <span className={wrap}>From</span>
-          <input type="date" value={value.from} onChange={e => set("from", e.target.value)} className={cn(inputCls, "mt-1")} style={{ borderRadius: 0 }} />
-        </label>
-        <label className="block">
-          <span className={wrap}>To</span>
-          <input type="date" value={value.to} onChange={e => set("to", e.target.value)} className={cn(inputCls, "mt-1")} style={{ borderRadius: 0 }} />
-        </label>
+        <div>
+          <label htmlFor="flt-cat" className={wrap}>Category</label>
+          <div className="mt-1">
+            <SelectField
+              id="flt-cat"
+              value={value.category}
+              onChange={v => set("category", v)}
+              options={[
+                { value: "all", label: "All categories" },
+                ...categories.expense.map(c => ({ value: c, label: c })),
+                ...categories.income.map(c => ({ value: c, label: c })),
+              ]}
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="flt-acct" className={wrap}>Account</label>
+          <div className="mt-1">
+            <SelectField
+              id="flt-acct"
+              value={value.account}
+              onChange={v => set("account", v)}
+              options={[
+                { value: "all", label: "All methods" },
+                ...[...new Set(value.allAccounts)].map(a => ({ value: a, label: a })),
+              ]}
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="flt-from" className={wrap}>From</label>
+          <div className="mt-1">
+            <DateField id="flt-from" value={value.from} onChange={v => set("from", v)} />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="flt-to" className={wrap}>To</label>
+          <div className="mt-1">
+            <DateField id="flt-to" value={value.to} onChange={v => set("to", v)} />
+          </div>
+        </div>
       </div>
     </div>
   );

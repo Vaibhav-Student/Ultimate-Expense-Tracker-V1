@@ -4,6 +4,7 @@ import { useFinance } from "../../store/finance.jsx";
 import { formatCurrency } from "../../utils/format.js";
 import { Progress, StatusBadge } from "../ui/Field.jsx";
 import { Field, inputCls } from "../ui/Field.jsx";
+import { SelectField } from "../ui/SelectField.jsx";
 import { cn } from "../../utils/cn.js";
 
 export function budgetStatus(spent, limit, warnAt) {
@@ -83,9 +84,7 @@ export function BudgetForm({ initial, month, onSaved }) {
     <form onSubmit={submit} noValidate aria-label={initial ? "Edit budget" : "Create budget"}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Category" htmlFor="bg-cat">
-          <select id="bg-cat" value={category} onChange={e => setCategory(e.target.value)} className={cn(inputCls, "cursor-pointer bg-paper")} style={{ borderRadius: 0 }}>
-            {categories.expense.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <SelectField id="bg-cat" value={category} onChange={setCategory} options={categories.expense} />
         </Field>
         <Field label="Monthly limit" error={error} htmlFor="bg-limit">
           <input id="bg-limit" type="number" min="1" step="1" inputMode="numeric" value={limit} onChange={e => setLimit(e.target.value)} placeholder="8000" className={inputCls} style={{ borderRadius: 0 }} />
