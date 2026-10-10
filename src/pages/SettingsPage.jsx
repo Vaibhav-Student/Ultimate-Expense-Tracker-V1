@@ -91,8 +91,15 @@ export function SettingsPage() {
         <section aria-labelledby="data-h" className="border border-ink bg-paper p-5 lg:col-span-2">
           <h2 id="data-h" className="font-serif font-black text-2xl">Data &amp; demonstration records.</h2>
           <p className="font-body text-[13px] text-neutral-600 mt-1">
-            {f.transactions.length} transactions stored locally ({f.transactions.filter(t => t.sample).length} marked SAMPLE).
-            Persistence is confirmed on every save to this browser.
+            {f.transactions.length} transactions stored on this device ({f.transactions.filter(t => t.sample).length} marked SAMPLE).
+          </p>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-pine mt-2" role="status">
+            ● Saved in this browser
+            {f.storage.savedAt ? ` · ${new Date(f.storage.savedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
+            {` · ${(f.storage.bytes / 1024).toFixed(1)} KB`}
+          </p>
+          <p className="font-body text-[13px] text-neutral-600 mt-1">
+            Per-device storage: your ledger lives in this browser's database (localStorage) — refresh-safe, offline, and never sent to any server.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <button onClick={exportJSON} className="flex-1 min-h-[44px] border border-ink font-sans text-xs font-bold uppercase tracking-widest hover:bg-ink hover:text-paper transition-colors">

@@ -85,9 +85,11 @@ function sampleTransactions() {
 const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
+  // Seed sample data ONLY on first launch (no stored key) or corrupt data.
+  // An empty stored array means the user cleared the ledger — respect it.
   const [transactions, setTransactions] = useState(() => {
     const existing = readJSON(K.tx, null);
-    if (Array.isArray(existing) && existing.length > 0) return migrate(existing);
+    if (Array.isArray(existing)) return migrate(existing);
     const seed = sampleTransactions();
     writeJSON(K.sample, true);
     return seed;
@@ -113,11 +115,20 @@ export function FinanceProvider({ children }) {
     defaultAccount: "Cash",
   }));
   const [month, setMonth] = useState(() => currentMonthKey());
+  const [savedAt, setSavedAt] = useState(null);
 
-  useEffect(() => { writeJSON(K.tx, transactions); }, [transactions]);
+  useEffect(() => {
+    writeJSON(K.tx, transactions);
+  }, [transactions]);
   useEffect(() => { writeJSON(K.budgets, budgets); }, [budgets]);
   useEffect(() => { writeJSON(K.cats, cats); }, [cats]);
   useEffect(() => { writeJSON(K.settings, settings); }, [settings]);
+
+  // Every ledger mutation stamps the save time (event handlers, not effects).
+  const saveTx = (updater) => {
+    setSavedAt(new Date().toISOString());
+    setTransactions(updater);
+  };
 
   const api = useMemo(() => {
     const inMonth = (t, mk) => monthKeyOf(t.date) === mk;
@@ -150,6 +161,13 @@ export function FinanceProvider({ children }) {
       transactions, budgets, categories: cats, settings, month, setMonth,
       isSample: readJSON(K.sample, false),
 
+      // Per-device browser database status (localStorage — stays on this device).
+      storage: {
+        records: transactions.length,
+        bytes: JSON.stringify(transactions).length + JSON.stringify(budgets).length,
+        savedAt,
+      },
+
       monthTx, sums, byCategory, balance, allTime,
 
       addTransaction: ({ type, amount, description, category, date, account, merchant, notes, status }) => {
@@ -171,7 +189,7 @@ export function FinanceProvider({ children }) {
           sample: false,
           createdAt: new Date().toISOString(),
         };
-        setTransactions(prev => [tx, ...prev]);
+        saveTx(prev => [tx, ...prev]);
         return { ok: true, tx };
       },
 
@@ -186,7 +204,7 @@ export function FinanceProvider({ children }) {
           return { ok: false, error: "Description cannot be empty." };
         }
         let updated = null;
-        setTransactions(prev => prev.map(t => {
+        saveTx(prev => prev.map(t => {
           if (t.id !== id) return t;
           updated = { ...t, ...patch, sample: false };
           return updated;
@@ -194,7 +212,7 @@ export function FinanceProvider({ children }) {
         return { ok: true, tx: updated };
       },
 
-      deleteTransaction: (id) => setTransactions(prev => prev.filter(t => t.id !== id)),
+      deleteTransaction: (id) => saveTx(prev => prev.filter(t => t.id !== id)),
 
       upsertBudget: ({ category, limit, month: mk }) => {
         const cents = toCents(limit);
@@ -232,7 +250,7 @@ export function FinanceProvider({ children }) {
         const clean = String(newName || "").trim().slice(0, 32);
         if (!clean) return { ok: false, error: "Name cannot be empty." };
         setCats(prev => ({ ...prev, [kind]: prev[kind].map(c => (c === oldName ? clean : c)) }));
-        setTransactions(prev => prev.map(t => {
+        saveTx(prev => prev.map(t => {
           const tKind = t.type === "income" ? "income" : "expense";
           if (tKind === kind && t.category === oldName) return { ...t, category: clean };
           return t;
@@ -244,7 +262,7 @@ export function FinanceProvider({ children }) {
       deleteCategory: (kind, name) => {
         const fallback = kind === "income" ? "Other Income" : "Other";
         setCats(prev => ({ ...prev, [kind]: prev[kind].filter(c => c !== name) }));
-        setTransactions(prev => prev.map(t => {
+        saveTx(prev => prev.map(t => {
           const tKind = t.type === "income" ? "income" : "expense";
           if (tKind === kind && t.category === name) return { ...t, category: fallback };
           return t;
@@ -257,7 +275,7 @@ export function FinanceProvider({ children }) {
 
       resetSample: () => {
         const seed = sampleTransactions();
-        setTransactions(seed);
+        saveTx(seed);
         writeJSON(K.sample, true);
         const mk = currentMonthKey();
         setBudgets(DEFAULT_BUDGETS.map(b => ({ id: uid("BG"), category: b.category, limitCents: b.limit * 100, month: mk })));
@@ -266,12 +284,12 @@ export function FinanceProvider({ children }) {
       },
 
       clearAll: () => {
-        setTransactions([]);
+        saveTx([]);
         setBudgets([]);
         try { localStorage.removeItem(K.sample); } catch { /* noop */ }
       },
     };
-  }, [transactions, budgets, cats, settings, month]);
+  }, [transactions, budgets, cats, settings, month, savedAt]);
 
   return <FinanceContext.Provider value={api}>{children}</FinanceContext.Provider>;
 }
