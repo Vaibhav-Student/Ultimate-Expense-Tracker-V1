@@ -25,7 +25,7 @@ export function MonthCalendar({ month, transactions, currency, selected, onSelec
       if (t.date.slice(0, 7) !== month) continue;
       const e = map[t.date] || (map[t.date] = { exp: 0, inc: 0, n: 0 });
       if (t.type === "income") e.inc += t.amountCents;
-      else e.exp += t.amountCents;
+      else if (t.type === "expense") e.exp += t.amountCents;
       e.n += 1;
     }
     return map;
@@ -127,10 +127,10 @@ export function DayLedger({ date, transactions, currency, onClear }) {
             <li key={t.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-100 transition-colors">
               <span className="flex-1 min-w-0">
                 <span className="block font-sans text-sm font-semibold truncate">{t.description}</span>
-                <span className="block font-mono text-[11px] text-neutral-500">{t.category} · {t.account}</span>
+                <span className="block font-mono text-[11px] text-neutral-500">{t.type === "transfer" ? `${t.fromAccount || t.account} → ${t.toAccount || ""}` : `${t.category} · ${t.account}`}</span>
               </span>
               <span className={cn("font-mono text-sm font-bold tnum whitespace-nowrap", t.type === "income" ? "text-pine" : "text-ink")}>
-                {t.type === "income" ? "+" : "−"}{formatCurrency(t.amountCents, currency)}
+                {t.type === "income" ? "+" : t.type === "transfer" ? "⇄ " : "−"}{formatCurrency(t.amountCents, currency)}
               </span>
             </li>
           ))}

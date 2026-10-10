@@ -34,7 +34,7 @@ export function Footer({ onNav }) {
 
         <div className="col-span-12 lg:col-span-2">
           <h3 className="font-mono text-xs uppercase tracking-widest border-b border-ink pb-2">Vol.</h3>
-          <p className="font-serif font-black text-5xl mt-4">1.0</p>
+          <p className="font-serif font-black text-5xl mt-4">0.5</p>
           <p className="font-mono text-[11px] uppercase tracking-widest text-neutral-500 mt-2">Ledger<br />Edition</p>
         </div>
       </div>

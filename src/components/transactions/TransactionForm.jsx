@@ -18,15 +18,23 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
   const [category, setCategory] = useState(initial?.category || "");
   const [date, setDate] = useState(initial?.date || todayISO());
   const [account, setAccount] = useState(initial?.account || settings.defaultAccount || "Cash");
+  const [fromAccount, setFromAccount] = useState(initial?.fromAccount || initial?.account || "Cash");
+  const [toAccount, setToAccount] = useState(initial?.toAccount || "");
   const [merchant, setMerchant] = useState(initial?.merchant || "");
   const [notes, setNotes] = useState(initial?.notes || "");
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const isTransfer = type === "transfer";
   const catList = type === "income" ? categories.income : categories.expense;
+  const accountUniverse = [...new Set([...DEFAULT_ACCOUNTS, account, fromAccount, toAccount].filter(Boolean))];
 
   useEffect(() => {
+    if (isTransfer) {
+      setCategory("Transfer");
+      return;
+    }
     if (!category || !catList.includes(category)) {
       setCategory(catList[0] || (type === "income" ? "Salary" : "Other"));
     }
@@ -37,18 +45,28 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
     e.preventDefault();
     if (busy) return;
     const next = {};
-    if (!description.trim()) next.description = "Description is required.";
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) next.amount = "Amount must be a number above zero.";
-    if (!category) next.category = "Pick a category.";
     if (!date) next.date = "Pick a date.";
+    if (isTransfer) {
+      if (!fromAccount) next.fromAccount = "Pick the source.";
+      if (!toAccount) next.toAccount = "Pick the destination.";
+    } else {
+      if (!description.trim()) next.description = "Description is required.";
+      if (!category) next.category = "Pick a category.";
+    }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
     setBusy(true);
-    const payload = {
-      type, amount: n, description: description.trim(), category, date,
-      account, merchant: merchant.trim(), notes: notes.trim(),
-    };
+    const payload = isTransfer
+      ? {
+          type, amount: n, description: description.trim(), category: "Transfer", date,
+          fromAccount, toAccount, notes: notes.trim(),
+        }
+      : {
+          type, amount: n, description: description.trim(), category, date,
+          account, merchant: merchant.trim(), notes: notes.trim(),
+        };
     const res = editing
       ? updateTransaction(initial.id, payload)
       : addTransaction(payload);
@@ -66,8 +84,8 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
 
   return (
     <form onSubmit={submit} noValidate aria-label={editing ? "Edit transaction" : "Add transaction"}>
-      <div className="grid grid-cols-2 border border-ink" role="tablist" aria-label="Transaction type">
-        {[{ v: "expense", label: "Expense" }, { v: "income", label: "Income" }].map(o => (
+      <div className="grid grid-cols-3 border border-ink" role="tablist" aria-label="Transaction type">
+        {[{ v: "expense", label: "Expense" }, { v: "income", label: "Income" }, { v: "transfer", label: "Transfer" }].map(o => (
           <button
             key={o.v}
             type="button"
@@ -99,37 +117,50 @@ export function TransactionForm({ initial, onSaved, submitLabel }) {
       </div>
 
       <div className="mt-4">
-        <Field label="Description" error={errors.description} htmlFor="tx-desc">
+        <Field label={isTransfer ? "Note (optional)" : "Description"} error={errors.description} htmlFor="tx-desc">
           <input
             id="tx-desc" value={description} onChange={e => setDescription(e.target.value)}
-            placeholder={type === "income" ? "Monthly salary — Acme Co." : "BigBasket groceries"}
+            placeholder={isTransfer ? "HDFC → UPI (auto if empty)" : type === "income" ? "Monthly salary — Acme Co." : "BigBasket groceries"}
             maxLength={120} className={inputCls} style={{ borderRadius: 0 }}
             aria-invalid={Boolean(errors.description)}
           />
         </Field>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Category" error={errors.category} htmlFor="tx-cat">
-          <SelectField id="tx-cat" value={category} onChange={setCategory} options={catList} />
-        </Field>
-        <Field label="Account / Method" htmlFor="tx-acct">
-          <SelectField
-            id="tx-acct"
-            value={account}
-            onChange={setAccount}
-            options={[...new Set([...DEFAULT_ACCOUNTS, account])]}
-          />
-        </Field>
-      </div>
+      {isTransfer ? (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="From account" error={errors.fromAccount} htmlFor="tx-from">
+            <SelectField id="tx-from" value={fromAccount} onChange={setFromAccount} options={accountUniverse} />
+          </Field>
+          <Field label="To account" error={errors.toAccount} htmlFor="tx-to">
+            <SelectField id="tx-to" value={toAccount} onChange={setToAccount} options={accountUniverse} />
+          </Field>
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Category" error={errors.category} htmlFor="tx-cat">
+            <SelectField id="tx-cat" value={category} onChange={setCategory} options={catList} />
+          </Field>
+          <Field label="Account / Method" htmlFor="tx-acct">
+            <SelectField
+              id="tx-acct"
+              value={account}
+              onChange={setAccount}
+              options={[...new Set([...DEFAULT_ACCOUNTS, account])]}
+            />
+          </Field>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Merchant (optional)" htmlFor="tx-merchant">
-          <input
-            id="tx-merchant" value={merchant} onChange={e => setMerchant(e.target.value)}
-            placeholder="BigBasket" maxLength={80} className={inputCls} style={{ borderRadius: 0 }}
-          />
-        </Field>
+        {!isTransfer && (
+          <Field label="Merchant (optional)" htmlFor="tx-merchant">
+            <input
+              id="tx-merchant" value={merchant} onChange={e => setMerchant(e.target.value)}
+              placeholder="BigBasket" maxLength={80} className={inputCls} style={{ borderRadius: 0 }}
+            />
+          </Field>
+        )}
         <Field label="Notes (optional)" htmlFor="tx-notes">
           <input
             id="tx-notes" value={notes} onChange={e => setNotes(e.target.value)}

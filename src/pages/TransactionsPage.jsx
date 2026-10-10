@@ -41,16 +41,17 @@ export function TransactionsPage({ globalQuery, onAdd, onEdit, onDelete }) {
   const page = Math.min(filters.page || 1, pages);
   const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const totals = filtered.reduce((a, t) => {
-    if (t.type === "income") a.in += t.amountCents; else a.out += t.amountCents;
+    if (t.type === "income") a.in += t.amountCents;
+    else if (t.type === "expense") a.out += t.amountCents;
     return a;
   }, { in: 0, out: 0 });
 
   const onSort = (key) => setSort(s => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "description" ? "asc" : "desc" }));
 
   const exportCSV = () => {
-    const head = ["id", "date", "type", "description", "category", "account", "merchant", "amount", "currency", "sample"];
+    const head = ["id", "date", "type", "description", "category", "account", "from_account", "to_account", "merchant", "amount", "currency", "sample"];
     const body = filtered.map(t => [
-      t.id, t.date, t.type, t.description, t.category, t.account, t.merchant,
+      t.id, t.date, t.type, t.description, t.category, t.account, t.fromAccount || "", t.toAccount || "", t.merchant,
       (t.amountCents / 100).toFixed(2), f.settings.currency, t.sample ? "yes" : "no",
     ]);
     downloadFile(`ledger-transactions-${Date.now()}.csv`, toCSV([head, ...body]));

@@ -10,18 +10,19 @@ export function TransactionFilters({ value, onChange }) {
   const wrap = "font-sans text-xs font-semibold uppercase tracking-widest text-neutral-600";
   return (
     <div className="border border-ink bg-paper">
-      <div className="grid grid-cols-3 divide-x divide-y md:divide-y-0 divide-ink border-b border-ink">
+      <div className="grid grid-cols-4 divide-x divide-y md:divide-y-0 divide-ink border-b border-ink">
         {[
           { id: "all", label: "All" },
           { id: "expense", label: "Expenses" },
           { id: "income", label: "Income" },
+          { id: "transfer", label: "Transfers" },
         ].map(o => (
           <button
             key={o.id}
             onClick={() => set("type", o.id)}
             aria-pressed={value.type === o.id}
             className={cn(
-              "py-2.5 min-h-[44px] font-sans text-xs font-bold uppercase tracking-widest transition-colors",
+              "py-2.5 min-h-[44px] font-sans text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-colors",
               value.type === o.id ? "bg-ink text-paper" : "hover:bg-neutral-100"
             )}
           >

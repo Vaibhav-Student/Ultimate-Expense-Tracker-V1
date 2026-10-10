@@ -16,12 +16,31 @@ function TypeBadge({ type }) {
   return (
     <span className={cn(
       "inline-block px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest border shrink-0",
-      type === "income" ? "bg-pinebg text-pine border-pine" : "bg-rosebg text-editorial border-editorial"
+      type === "income" ? "bg-pinebg text-pine border-pine"
+      : type === "transfer" ? "bg-ink text-paper border-ink"
+      : "bg-rosebg text-editorial border-editorial"
     )}>
-      {type === "income" ? "IN" : "OUT"}
+      {type === "income" ? "IN" : type === "transfer" ? "TR" : "OUT"}
       <span className="sr-only">{type}</span>
     </span>
   );
+}
+
+function routeOf(t) {
+  if (t.type !== "transfer") return null;
+  const from = t.fromAccount || t.account || "";
+  const to = t.toAccount || "";
+  return from && to ? `${from} → ${to}` : (from || to || "Transfer");
+}
+
+function SignedAmount({ t, currency, className }) {
+  if (t.type === "income") {
+    return <span className={cn("text-pine", className)}>+{formatCurrency(t.amountCents, currency)}</span>;
+  }
+  if (t.type === "transfer") {
+    return <span className={cn("text-ink", className)}>⇄ {formatCurrency(t.amountCents, currency)}</span>;
+  }
+  return <span className={cn("text-ink", className)}>−{formatCurrency(t.amountCents, currency)}</span>;
 }
 
 export function TransactionTable({ rows, sort, onSort, onEdit, onDelete, onAdd }) {
@@ -68,11 +87,11 @@ export function TransactionTable({ rows, sort, onSort, onEdit, onDelete, onAdd }
               <div className="min-w-0">
                 <p className="font-sans text-[15px] font-semibold leading-snug break-words">{t.description}</p>
                 <p className="font-mono text-[11px] text-neutral-500 mt-0.5">
-                  {t.category} · {t.account}{t.merchant ? ` · ${t.merchant}` : ""}
+                  {t.type === "transfer" ? routeOf(t) : `${t.category} · ${t.account}`}{t.type !== "transfer" && t.merchant ? ` · ${t.merchant}` : ""}
                 </p>
               </div>
-              <p className={cn("font-mono text-[15px] font-bold tnum whitespace-nowrap", t.type === "income" ? "text-pine" : "text-ink")}>
-                {t.type === "income" ? "+" : "−"}{formatCurrency(t.amountCents, settings.currency)}
+              <p className="font-mono text-[15px] font-bold tnum whitespace-nowrap">
+                <SignedAmount t={t} currency={settings.currency} />
               </p>
             </div>
             <div className="flex gap-2 mt-3">
@@ -131,14 +150,11 @@ export function TransactionTable({ rows, sort, onSort, onEdit, onDelete, onAdd }
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="inline-block px-2 py-0.5 font-mono text-[11px] uppercase tracking-widest border border-ink">{t.category}</span>
+                  <span className={cn("inline-block px-2 py-0.5 font-mono text-[11px] uppercase tracking-widest border", t.type === "transfer" ? "bg-ink text-paper border-ink" : "border-ink text-ink")}>{t.category}</span>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs">{t.account}</td>
-                <td className={cn(
-                  "px-4 py-3 font-mono text-sm tnum text-right whitespace-nowrap font-medium",
-                  t.type === "income" ? "text-pine" : "text-ink"
-                )}>
-                  {t.type === "income" ? "+" : "−"}{formatCurrency(t.amountCents, settings.currency)}
+                <td className="px-4 py-3 font-mono text-xs">{t.type === "transfer" ? routeOf(t) : t.account}</td>
+                <td className="px-4 py-3 font-mono text-sm tnum text-right whitespace-nowrap font-medium">
+                  <SignedAmount t={t} currency={settings.currency} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <TypeBadge type={t.type} />

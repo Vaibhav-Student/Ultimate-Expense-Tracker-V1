@@ -3,6 +3,7 @@ import { Download, Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { useFinance } from "../store/finance.jsx";
 import { CategoryDonut, CategoryBars, CashflowTrend } from "../components/reports/Charts.jsx";
 import { MonthCalendar, DayLedger } from "../components/reports/MonthCalendar.jsx";
+import { TimeChart } from "../components/reports/TimeChart.jsx";
 import { DateField } from "../components/ui/DateField.jsx";
 import { formatCurrency, monthLabel, shiftMonth, currentMonthKey, toCSV, downloadFile } from "../utils/format.js";
 
@@ -116,6 +117,13 @@ export function ReportsPage() {
           <h2 className="font-mono text-xs uppercase tracking-widest border-b border-ink pb-2">Cash-flow trend</h2>
           <div className="mt-4">
             {enough ? <CashflowTrend points={months} currency={f.settings.currency} /> : <p className="font-body text-sm text-neutral-600">Insufficient data for a reliable trend — file entries across two or more months.</p>}
+          </div>
+        </div>
+
+        <div className="col-span-12 border border-ink bg-paper p-4 sm:p-5 print-block">
+          <h2 className="font-mono text-xs uppercase tracking-widest border-b border-ink pb-2">Spending bars — over time</h2>
+          <div className="mt-4">
+            <TimeChart transactions={f.transactions} currency={f.settings.currency} />
           </div>
         </div>
 

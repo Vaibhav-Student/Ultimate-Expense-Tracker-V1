@@ -79,6 +79,12 @@ function sampleTransactions() {
     T("2026-08-11", "expense", 3200, "Movie + outings", "Entertainment", "Cash", "PVR"),
     T("2026-08-08", "income", 5200, "Dividends", "Investments", "SBI ••1005", "Zerodha"),
     T("2026-08-02", "expense", 4100, "Clothing", "Shopping", "SBI ••1005", "Decathlon"),
+    {
+      id: uid("TX"), date: "2026-10-06", type: "transfer", amountCents: 500000,
+      description: "HDFC ••4821 → UPI", category: "Transfer", account: "HDFC ••4821",
+      fromAccount: "HDFC ••4821", toAccount: "UPI", merchant: "", notes: "",
+      status: "Cleared", sample: true, createdAt: new Date().toISOString(),
+    },
   ];
 }
 
@@ -159,13 +165,40 @@ export function FinanceProvider({ children }) {
       let income = 0, expenses = 0;
       for (const t of list) {
         if (t.type === "income") income += t.amountCents;
-        else expenses += t.amountCents;
+        else if (t.type === "expense") expenses += t.amountCents;
+        // transfers move money between accounts — net-neutral in totals
       }
       return { income, expenses, net: income - expenses, count: list.length };
     };
 
+    // Per-account balances: income adds, expense subtracts, transfer moves between accounts.
+    const accountBalances = (list) => {
+      const m = {};
+      for (const t of list) {
+        if (t.type === "income") {
+          m[t.account] = (m[t.account] || 0) + t.amountCents;
+        } else if (t.type === "expense") {
+          m[t.account] = (m[t.account] || 0) - t.amountCents;
+        } else if (t.type === "transfer") {
+          const from = t.fromAccount || t.account;
+          const to = t.toAccount || t.account;
+          m[from] = (m[from] || 0) - t.amountCents;
+          m[to] = (m[to] || 0) + t.amountCents;
+        }
+      }
+      return Object.entries(m)
+        .map(([label, cents]) => ({ label, cents }))
+        .sort((a, b) => b.cents - a.cents);
+    };
+
     const allTime = sums(transactions);
-    const balance = OPENING_BALANCE_CENTS + allTime.net;
+    // Balance treats transfers as outflows: money that left an account,
+    // even when it arrived at another one you also track.
+    const balance = OPENING_BALANCE_CENTS +
+      allTime.net -
+      transactions
+        .filter(t => t.type === "transfer")
+        .reduce((a, t) => a + t.amountCents, 0);
 
     const byCategory = (list) => {
       const m = {};
@@ -189,13 +222,37 @@ export function FinanceProvider({ children }) {
         savedAt,
       },
 
-      monthTx, sums, byCategory, balance, allTime,
+      monthTx, sums, byCategory, balance, allTime, accountBalances,
 
-      addTransaction: ({ type, amount, description, category, date, account, merchant, notes, status }) => {
+      addTransaction: ({ type, amount, description, category, date, account, merchant, notes, status, fromAccount, toAccount }) => {
         const cents = toCents(amount);
-        if (!description?.trim() || cents == null || cents <= 0) return { ok: false, error: "Enter a description and an amount above zero." };
-        if (!category) return { ok: false, error: "Pick a category." };
+        if (cents == null || cents <= 0) return { ok: false, error: "Enter an amount above zero." };
         if (!date) return { ok: false, error: "Pick a date." };
+        if (type === "transfer") {
+          const from = String(fromAccount || "").trim().slice(0, 24);
+          const to = String(toAccount || "").trim().slice(0, 24);
+          if (!from || !to) return { ok: false, error: "Pick both accounts." };
+          const tx = {
+            id: uid("TX"),
+            date,
+            type: "transfer",
+            amountCents: cents,
+            description: description?.trim().slice(0, 120) || `${from} → ${to}`,
+            category: "Transfer",
+            account: from,
+            fromAccount: from,
+            toAccount: to,
+            merchant: "",
+            notes: (notes || "").slice(0, 280),
+            status: status || "Cleared",
+            sample: false,
+            createdAt: new Date().toISOString(),
+          };
+          saveTx(prev => [tx, ...prev]);
+          return { ok: true, tx };
+        }
+        if (!description?.trim()) return { ok: false, error: "Enter a description." };
+        if (!category) return { ok: false, error: "Pick a category." };
         const tx = {
           id: uid("TX"),
           date,
@@ -221,7 +278,14 @@ export function FinanceProvider({ children }) {
           patch = { ...patch, amountCents: cents };
           delete patch.amount;
         }
-        if (patch.description != null && !String(patch.description).trim()) {
+        if (patch.type === "transfer") {
+          if (!patch.fromAccount || !patch.toAccount) return { ok: false, error: "Pick both accounts." };
+          patch = {
+            ...patch,
+            category: "Transfer",
+            description: String(patch.description || "").trim() || `${patch.fromAccount} → ${patch.toAccount}`,
+          };
+        } else if (patch.description != null && !String(patch.description).trim()) {
           return { ok: false, error: "Description cannot be empty." };
         }
         let updated = null;
@@ -308,6 +372,74 @@ export function FinanceProvider({ children }) {
         saveTx([]);
         setBudgets([]);
         try { localStorage.removeItem(K.sample); } catch { /* noop */ }
+      },
+
+      // Bulk import from a parsed file (see utils/io.js).
+      // merge: add rows, skipping ids already on file. replace: whole ledger.
+      importLedger: (parsed, mode = "merge") => {
+        if (!parsed || !Array.isArray(parsed.rows)) return { ok: false, error: "Nothing to import." };
+        const seen = new Set(transactions.map(t => t.id));
+        let imported = 0;
+        let skipped = 0;
+        const fresh = parsed.rows.map(r => {
+          let id = typeof r.id === "string" && r.id ? r.id : uid("TX");
+          if (seen.has(id)) {
+            if (mode === "merge") { skipped += 1; return null; }
+            id = uid("TX"); // replace mode: keep every row, mint a fresh id on clash
+          }
+          seen.add(id);
+          imported += 1;
+          return {
+            id,
+            date: r.date,
+            type: r.type,
+            amountCents: r.amountCents,
+            description: r.description,
+            category: r.category,
+            account: r.account,
+            fromAccount: r.fromAccount || "",
+            toAccount: r.toAccount || "",
+            merchant: r.merchant || "",
+            notes: "",
+            status: "Cleared",
+            sample: false,
+            createdAt: new Date().toISOString(),
+          };
+        }).filter(Boolean);
+
+        if (mode === "replace") {
+          saveTx(fresh);
+          if (Array.isArray(parsed.budgets)) {
+            const clean = parsed.budgets
+              .filter(b => b && typeof b.category === "string" && b.category &&
+                Number.isInteger(b.limitCents) && b.limitCents > 0 &&
+                /^\d{4}-\d{2}$/.test(b.month || ""))
+              .map(b => ({ id: uid("BG"), category: b.category.slice(0, 32), limitCents: b.limitCents, month: b.month }));
+            setBudgets(clean);
+          } else {
+            setBudgets([]);
+          }
+          if (parsed.categories && Array.isArray(parsed.categories.expense) && Array.isArray(parsed.categories.income)) {
+            const str = (a) => [...new Set(a.filter(c => typeof c === "string" && c.trim()).map(c => c.trim().slice(0, 32)))];
+            const exp = str(parsed.categories.expense);
+            const inc = str(parsed.categories.income);
+            if (!exp.includes("Other")) exp.push("Other");
+            if (!inc.includes("Other Income")) inc.push("Other Income");
+            setCats({ expense: exp, income: inc });
+          }
+          if (parsed.settings && typeof parsed.settings === "object") {
+            const s = {};
+            if (["INR", "USD"].includes(parsed.settings.currency)) s.currency = parsed.settings.currency;
+            if (typeof parsed.settings.warningAt === "number") s.warningAt = parsed.settings.warningAt;
+            if (typeof parsed.settings.defaultAccount === "string") s.defaultAccount = parsed.settings.defaultAccount.slice(0, 24);
+            if (["light", "dark"].includes(parsed.settings.theme)) s.theme = parsed.settings.theme;
+            setSettings(prev => ({ ...prev, ...s }));
+          }
+          try { localStorage.removeItem(K.sample); } catch { /* noop */ }
+        } else {
+          if (fresh.length > 0) saveTx(prev => [...fresh, ...prev]);
+        }
+        return { ok: true, imported, skipped };
       },
     };
   }, [transactions, budgets, cats, settings, month, savedAt]);

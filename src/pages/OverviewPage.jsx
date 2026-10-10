@@ -76,17 +76,10 @@ export function OverviewPage({ onAdd, onEdit, onDelete, onNav }) {
 
   return (
     <div>
-      {/* A. Editorial hero */}
-      <section aria-labelledby="ov-h">
+      {/* A. Controls */}
+      <section aria-label="Reporting controls">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-editorial font-bold">Overview · {monthLabel(month)}</p>
-        <h1 id="ov-h" className="font-serif font-black tracking-tighter leading-[0.95] text-5xl sm:text-6xl lg:text-7xl mt-2">
-          Your Money,<br />in Black and White.
-        </h1>
-        <p className="font-body text-[15px] lg:text-base text-neutral-600 leading-relaxed mt-3 max-w-2xl">
-          An accurate account of what comes in, what goes out, and what remains.
-          {f.isSample && " Sample rows are marked SAMPLE — replace them with your own."}
-        </p>
-        <div className="flex flex-wrap items-center gap-3 mt-5">
+        <div className="flex flex-wrap items-center gap-3 mt-3">
           <MonthSelector />
           <button onClick={onAdd} className="min-h-[44px] px-6 inline-flex items-center gap-2 bg-ink text-paper font-sans text-xs font-bold uppercase tracking-widest hover:bg-paper hover:text-ink border hover:border-ink transition-colors">
             <Plus className="h-4 w-4" strokeWidth={2} /> Add transaction
@@ -110,6 +103,8 @@ export function OverviewPage({ onAdd, onEdit, onDelete, onNav }) {
           ))}
         </div>
       </section>
+
+
 
       {/* C. Spending analysis */}
       <section aria-labelledby="spend-h" className="mt-10">
