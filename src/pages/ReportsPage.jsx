@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, ArrowLeft, ArrowRight } from "lucide-react";
 import { useFinance } from "../store/finance.jsx";
 import { CategoryDonut, CategoryBars, CashflowTrend } from "../components/reports/Charts.jsx";
-import { formatCurrency, monthLabel, shiftMonth, toCSV, downloadFile } from "../utils/format.js";
+import { MonthCalendar, DayLedger } from "../components/reports/MonthCalendar.jsx";
+import { formatCurrency, monthLabel, shiftMonth, currentMonthKey, toCSV, downloadFile } from "../utils/format.js";
 
 export function ReportsPage() {
   const f = useFinance();
   const [from, setFrom] = useState(() => shiftMonth(f.month, -2).slice(0, 7) + "-01");
   const [to, setTo] = useState(() => f.month + "-28");
+  const [calMonth, setCalMonth] = useState(() => currentMonthKey());
+  const [selDay, setSelDay] = useState(null);
 
   const rows = useMemo(() => {
     return f.transactions
@@ -104,10 +107,40 @@ export function ReportsPage() {
           <h2 className="font-mono text-xs uppercase tracking-widest border-b border-ink pb-2">Category bars</h2>
           <div className="mt-4"><CategoryBars data={cats} currency={f.settings.currency} /></div>
         </div>
-        <div className="col-span-12 border border-ink bg-paper p-5 print-block">
+        <div className="col-span-12 border border-ink bg-paper p-4 sm:p-5 print-block">
           <h2 className="font-mono text-xs uppercase tracking-widest border-b border-ink pb-2">Cash-flow trend</h2>
           <div className="mt-4">
             {enough ? <CashflowTrend points={months} currency={f.settings.currency} /> : <p className="font-body text-sm text-neutral-600">Insufficient data for a reliable trend — file entries across two or more months.</p>}
+          </div>
+        </div>
+
+        <div className="col-span-12 border border-ink bg-paper p-4 sm:p-5 print-block">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-mono text-xs uppercase tracking-widest">Daily ledger — calendar</h2>
+            <div className="flex items-center border border-ink no-print" role="group" aria-label="Calendar month">
+              <button onClick={() => setCalMonth(shiftMonth(calMonth, -1))} aria-label="Previous month" className="min-h-[44px] min-w-[44px] flex items-center justify-center border-r border-ink hover:bg-ink hover:text-paper transition-colors">
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+              </button>
+              <span className="px-4 font-mono text-xs uppercase tracking-widest whitespace-nowrap" aria-live="polite">{monthLabel(calMonth)}</span>
+              <button onClick={() => setCalMonth(shiftMonth(calMonth, 1))} aria-label="Next month" className="min-h-[44px] min-w-[44px] flex items-center justify-center border-l border-ink hover:bg-ink hover:text-paper transition-colors">
+                <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+          <div className="mt-4">
+            <MonthCalendar
+              month={calMonth}
+              transactions={f.transactions}
+              currency={f.settings.currency}
+              selected={selDay}
+              onSelect={setSelDay}
+            />
+            <DayLedger
+              date={selDay}
+              transactions={f.transactions}
+              currency={f.settings.currency}
+              onClear={() => setSelDay(null)}
+            />
           </div>
         </div>
       </div>
